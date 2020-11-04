@@ -34,18 +34,25 @@ public class AWSSimulator {
     private final Arguments arguments;
     private final AmazonEC2 amazonEC2;
     private final AWSSimpleSystemsManagement amazonSSM;
+    private final RetryTemplate retryTemplate;
 
-    public AWSSimulator(Arguments arguments, AmazonEC2 amazonEC2, AWSSimpleSystemsManagement amazonSSM) {
+    public AWSSimulator(Arguments arguments, AmazonEC2 amazonEC2, AWSSimpleSystemsManagement amazonSSM, RetryTemplate retryTemplate) {
         this.arguments = arguments;
         this.amazonEC2 = amazonEC2;
         this.amazonSSM = amazonSSM;
+        this.retryTemplate = retryTemplate;
     }
 
     public static void main(String[] args) {
         final Arguments arguments = parseArgs(args);
         final AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
         final AWSSimpleSystemsManagement ssm = AWSSimpleSystemsManagementClientBuilder.defaultClient();
-        new AWSSimulator(arguments, ec2, ssm).run();
+        final RetryTemplate retryTemplate = RetryTemplate.builder()
+                .maxAttempts(5)
+                .fixedBackoff(3000)
+                .retryOn(AWSSimpleSystemsManagementException.class)
+                .build();
+        new AWSSimulator(arguments, ec2, ssm, retryTemplate).run();
     }
 
     private void run() {
@@ -80,12 +87,7 @@ public class AWSSimulator {
             final SendCommandResult sendCommandResult = amazonSSM.sendCommand(sendCommandRequest);
             System.err.println("Command is sent successfully: " + sendCommandResult.getCommand().getCommandId());
             for (String spotInstanceId : spotInstanceIds) {
-                final RetryTemplate commandExecutedWaiterRetry = RetryTemplate.builder()
-                        .maxAttempts(5)
-                        .fixedBackoff(3000)
-                        .retryOn(AWSSimpleSystemsManagementException.class)
-                        .build();
-                commandExecutedWaiterRetry.execute(
+                retryTemplate.execute(
                         ctx -> {
                             amazonSSM.waiters().commandExecuted().run(new WaiterParameters<>(new GetCommandInvocationRequest()
                                     .withInstanceId(spotInstanceId)
