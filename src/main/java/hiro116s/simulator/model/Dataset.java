@@ -8,22 +8,22 @@ import java.util.List;
 import java.util.Map;
 
 public class Dataset {
-    final List<Results> resultsAll;
+    final List<EvaluationResults> resultsAll;
 
-    public Dataset(List<Results> resultsAll) {
+    public Dataset(List<EvaluationResults> resultsAll) {
         this.resultsAll = resultsAll;
     }
 
     public void show() {
         final Map<Long, Double> maxScoresBySeed = new HashMap<>();
-        for (final Results results : resultsAll) {
+        for (final EvaluationResults results : resultsAll) {
             for (final Result result : results.results) {
                 maxScoresBySeed.put(result.seed, Math.max(maxScoresBySeed.getOrDefault(result.seed, Double.MIN_VALUE), result.parsedData.score));
             }
         }
-        List<Results> sortedResults = new ArrayList<>(resultsAll);
+        List<EvaluationResults> sortedResults = new ArrayList<>(resultsAll);
         sortedResults.sort(Comparator.comparingDouble(r -> -r.evalScore(maxScoresBySeed)));
-        for (Results results : sortedResults) {
+        for (EvaluationResults results : sortedResults) {
             System.out.println(results.filePath + " " + results.evalScore(maxScoresBySeed));
         }
     }

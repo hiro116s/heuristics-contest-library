@@ -3,11 +3,11 @@ package hiro116s.simulator.model;
 import java.util.List;
 import java.util.Map;
 
-public class Results {
+public class EvaluationResults {
     final String filePath;
     final List<Result> results;
 
-    public Results(String filePath, List<Result> results) {
+    public EvaluationResults(String filePath, List<Result> results) {
         this.filePath = filePath;
         this.results = results;
     }

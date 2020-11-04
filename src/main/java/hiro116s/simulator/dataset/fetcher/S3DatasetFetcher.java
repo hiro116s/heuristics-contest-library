@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import hiro116s.simulator.model.Dataset;
 import hiro116s.simulator.model.Result;
-import hiro116s.simulator.model.Results;
+import hiro116s.simulator.model.EvaluationResults;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,7 +41,7 @@ public class S3DatasetFetcher implements DatasetFetcher {
             throw new AmazonS3Exception("No such bucket: " + s3BucketName);
         }
         final List<S3ObjectSummary> objectSummaries = s3.listObjectsV2(s3BucketName, s3KeyPrefix).getObjectSummaries();
-        final ImmutableList.Builder<Results> builder = ImmutableList.builder();
+        final ImmutableList.Builder<EvaluationResults> builder = ImmutableList.builder();
         for (final S3ObjectSummary objectSummary : objectSummaries) {
             if (objectSummary.getKey().endsWith("/")) {
                 // Skip type=directory
@@ -49,7 +49,7 @@ public class S3DatasetFetcher implements DatasetFetcher {
             }
             try (final S3ObjectInputStream is = s3.getObject(s3BucketName, objectSummary.getKey()).getObjectContent();
                  final InputStreamReader isr = new InputStreamReader(is)) {
-                final Results results = new Results(getFilePath(objectSummary.getKey()), new ObjectMapper().readValue(isr, TYPE_REFERENCE));
+                final EvaluationResults results = new EvaluationResults(getFilePath(objectSummary.getKey()), new ObjectMapper().readValue(isr, TYPE_REFERENCE));
                 builder.add(results);
             }
         }
