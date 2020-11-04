@@ -1,6 +1,7 @@
-package hiro116s.simulator;
+package hiro116s.simulator.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import hiro116s.simulator.ParsedData;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class Result {

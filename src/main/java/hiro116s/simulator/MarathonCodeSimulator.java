@@ -8,6 +8,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.io.CharStreams;
 import com.google.common.io.LineProcessor;
+import hiro116s.simulator.model.Result;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
