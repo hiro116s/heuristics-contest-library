@@ -3,19 +3,18 @@ package hiro116s.simulator;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Stopwatch;
+import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
-import hiro116s.simulator.lineprocessor.OutputLineProcessor;
-import hiro116s.simulator.model.ParsedData;
-import hiro116s.simulator.model.Result;
+import hiro116s.simulator.model.CommandTemplate;
 import hiro116s.simulator.model.SimulationResults;
+import hiro116s.simulator.option.CommandTemplateOptionHandler;
 import hiro116s.simulator.simulator.CommandLineSimulator;
 import hiro116s.simulator.simulator.ConcurrentCommandLineSimulator;
 import hiro116s.simulator.simulator.Simulator;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.FileOptionHandler;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,13 +23,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -38,23 +30,23 @@ import java.util.stream.LongStream;
  * Tool to evaluate the score in the heuristic contest.
  */
 public class MarathonCodeSimulator {
-    private static final String MAIN_NAME = "SoccerTournament";
-
     private final Simulator simulator;
     private final Arguments arguments;
 
-    public MarathonCodeSimulator(final Arguments arguments) {
-        this.simulator = ConcurrentCommandLineSimulator.create(
-                arguments.numThreads,
-                LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList()),
-                seed -> new CommandLineSimulator(seed, Runtime.getRuntime())
-        );
+    public MarathonCodeSimulator(final Simulator simulator, final Arguments arguments) {
+        this.simulator = simulator;
         this.arguments = arguments;
     }
 
     public static void main(String[] args) {
         final Arguments arguments = parseArgs(args);
-        new MarathonCodeSimulator(arguments).run();
+        new MarathonCodeSimulator(
+                ConcurrentCommandLineSimulator.create(
+                        arguments.numThreads,
+                        LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList()),
+                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.directory)),
+                arguments
+        ).run();
     }
 
     private void run() {
@@ -81,7 +73,7 @@ public class MarathonCodeSimulator {
             if (!s3.doesBucketExistV2(arguments.s3BucketName)) {
                 s3.createBucket(arguments.s3BucketName);
             }
-            s3.putObject(arguments.s3BucketName, MAIN_NAME + "/log/" + logFileName, new File(logFilePath));
+            s3.putObject(arguments.s3BucketName, arguments.s3KeyName + "/log/" + logFileName, new File(logFilePath));
         }
     }
 
@@ -104,22 +96,24 @@ public class MarathonCodeSimulator {
             parser.parseArgument(args);
         } catch (final CmdLineException e) {
             System.err.println(e);
+            parser.printUsage(System.err);
             System.exit(1);
         }
+        arguments.validate();
         return arguments;
     }
 
-    private static class Arguments {
-        @Option(name = "--numThreads")
+    public static class Arguments {
+        @Option(name = "--numThreads", usage = "Number of threads")
         private int numThreads = 1;
 
-        @Option(name = "--minSeed")
+        @Option(name = "--minSeed", usage = "min seed")
         private int minSeed = 1;
 
-        @Option(name = "--maxSeed")
+        @Option(name = "--maxSeed", usage = "max seed")
         private int maxSeed = 100;
 
-        @Option(name = "--logOutputDir")
+        @Option(name = "--logOutputDir", usage = "log output directory")
         private String logOutputDir = "./log";
 
         @Option(name = "--additionalNote", usage = "additional note for file name")
@@ -130,5 +124,23 @@ public class MarathonCodeSimulator {
 
         @Option(name = "--s3bucket", usage = "s3 bucket name")
         private String s3BucketName = "hiro116s.s3bucket.jp";
+
+        @Option(name = "--s3KeyName", usage = "s3 key name")
+        private String s3KeyName;
+
+        @Option(name = "--commandTemplate",
+                usage = "Command template which you want to use for simulation.  A template array must include at least $SEED value",
+                handler = CommandTemplateOptionHandler.class,
+                required = true)
+        private CommandTemplate commandTemplate;
+
+        @Option(name = "--commandDirectory", usage = "Directory on which you want to run the simulation", handler = FileOptionHandler.class)
+        private File directory = null;
+
+        public void validate() {
+            if (shouldUploadToS3) {
+                Preconditions.checkArgument(s3BucketName != null && s3KeyName != null, "--s3KeyName and --s3Bucket option must be set with --s3 option");
+            }
+        }
     }
 }

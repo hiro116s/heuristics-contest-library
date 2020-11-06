@@ -16,6 +16,10 @@ public class SimulationResults {
         this.results.addAll(simulationResults.results);
     }
 
+    public List<Result> getResults() {
+        return results;
+    }
+
     @Override
     public String toString() {
         return "SimulationResults{" +
