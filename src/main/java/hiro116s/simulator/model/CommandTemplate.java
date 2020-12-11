@@ -12,14 +12,14 @@ public abstract class CommandTemplate {
 
     @Value.Check
     public void validate() {
-        Preconditions.checkArgument(commandTemplate().stream().anyMatch(PlaceHolder.SEED.name::equals), "At least one parameter must be " + PlaceHolder.SEED.name);
+        Preconditions.checkArgument(commandTemplate().stream().anyMatch(s -> s.contains(PlaceHolder.SEED.name)), "At least one parameter must include " + PlaceHolder.SEED.name + ", " + commandTemplate());
     }
 
     public List<String> build(final long seed) {
         return commandTemplate().stream()
                 .map(s -> {
-                    if (PlaceHolder.SEED.name.equals(s)) {
-                        return Long.toString(seed);
+                    if (s.contains(PlaceHolder.SEED.name)) {
+                        return s.replace(PlaceHolder.SEED.name, Long.toString(seed));
                     } else {
                         return s;
                     }

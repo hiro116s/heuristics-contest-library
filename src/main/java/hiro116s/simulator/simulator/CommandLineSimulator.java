@@ -37,7 +37,8 @@ public class CommandLineSimulator implements Simulator {
         // TODO: Use log4j
         System.out.println("Start seed " + seed);
         final Stopwatch stopwatch = Stopwatch.createStarted();
-        final ProcessBuilder processBuilder = new ProcessBuilder(commandTemplate.build(seed));
+        final ProcessBuilder processBuilder = new ProcessBuilder(commandTemplate.build(seed))
+                .redirectErrorStream(true);
         Optional.ofNullable(directory).ifPresent(processBuilder::directory);
 
         final Process exec;
