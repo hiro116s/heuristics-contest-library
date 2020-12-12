@@ -52,7 +52,7 @@ public class MarathonCodeEvaluator {
         private boolean showOnlyFilename = true;
 
         @Option(name = "--s3", usage = "s3 option")
-        private boolean readFromS3 = true;
+        private boolean readFromS3 = false;
 
         @Option(name = "--s3bucket", usage = "s3 bucket name")
         private String s3BucketName = "hiro116s.s3bucket.jp";
