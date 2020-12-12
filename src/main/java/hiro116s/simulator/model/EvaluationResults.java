@@ -23,7 +23,7 @@ public class EvaluationResults {
     public double evalScore(Map<Long, Double> maxScoresBySeed) {
         double res = 0;
         for (final Result result : results) {
-            res += result.parsedData.score / maxScoresBySeed.get(result.seed);
+            res += result.parsedData.score;// / maxScoresBySeed.get(result.seed);
         }
         return res;
     }
