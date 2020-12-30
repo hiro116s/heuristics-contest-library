@@ -14,7 +14,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class CommandLineSimulator implements Simulator {
     private final long seed;
@@ -39,6 +41,9 @@ public class CommandLineSimulator implements Simulator {
         final Stopwatch stopwatch = Stopwatch.createStarted();
         final ProcessBuilder processBuilder = new ProcessBuilder(commandTemplate.build(seed))
                 .redirectErrorStream(true);
+        commandTemplate.inRedirectFilePathOrEmpty(seed).ifPresent(
+                redirectFilePath -> processBuilder.redirectInput(ProcessBuilder.Redirect.from(new File(redirectFilePath)))
+        );
         Optional.ofNullable(directory).ifPresent(processBuilder::directory);
 
         final Process exec;
