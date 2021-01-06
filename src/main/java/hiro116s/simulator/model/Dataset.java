@@ -23,8 +23,9 @@ public class Dataset {
         }
         List<EvaluationResults> sortedResults = new ArrayList<>(resultsAll);
         sortedResults.sort(Comparator.comparingDouble(r -> -r.evalScore(maxScoresBySeed)));
+        System.out.printf("Max score: %7f\n", resultsAll.get(0).results.stream().map(r -> r.parsedData.maxScore).reduce(0.0, Double::sum));
         for (EvaluationResults results : sortedResults) {
-            System.out.println(results.filePath + " " + results.evalScore(maxScoresBySeed));
+            System.out.printf("%s %7f\n", results.filePath, results.evalScore(maxScoresBySeed));
         }
     }
 }
