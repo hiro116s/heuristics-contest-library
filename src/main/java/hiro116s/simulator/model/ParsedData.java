@@ -2,6 +2,8 @@ package hiro116s.simulator.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.Map;
+
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class ParsedData {
     public static final double NO_FIELD = -1.0;
@@ -9,14 +11,16 @@ public class ParsedData {
     public double score;
     public double maxScore;
     public double ratio;
+    public Map<String, Object> params;
 
     public ParsedData() {
     }
 
-    public ParsedData(double score, double maxScore) {
+    public ParsedData(double score, double maxScore, Map<String, Object> params) {
         this.score = score;
         this.maxScore = maxScore;
         this.ratio = maxScore == NO_FIELD ? NO_FIELD : 100. * (score / maxScore);
+        this.params = params;
     }
 
     @Override
@@ -25,6 +29,7 @@ public class ParsedData {
                 "score=" + score +
                 ", maxScore=" + maxScore +
                 ", ratio=" + ratio +
+                ", params=" + params +
                 '}';
     }
 }

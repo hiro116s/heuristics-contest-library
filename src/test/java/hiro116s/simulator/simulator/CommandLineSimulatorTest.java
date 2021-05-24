@@ -1,5 +1,6 @@
 package hiro116s.simulator.simulator;
 
+import com.google.common.collect.ImmutableMap;
 import hiro116s.simulator.model.ImmutableCommandTemplate;
 import hiro116s.simulator.model.SimulationResults;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,29 @@ class CommandLineSimulatorTest {
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);
+        assertEquals(1, actual.getResults().get(0).seed);
+    }
+
+    @Test
+    void simulate3() {
+        final ImmutableCommandTemplate commandTemplate = ImmutableCommandTemplate.builder()
+                .addCommandTemplate("echo")
+                .addCommandTemplate("Score = $SEED")
+                .addCommandTemplate("\nParam:M = 1")
+                .addCommandTemplate("\nParam:N = 2")
+                .addCommandTemplate("\nParam:hoge = fuga")
+                .build();
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, null);
+
+        final SimulationResults actual = simulator.simulate();
+        assertEquals(1, actual.getResults().size());
+        assertEquals(1, actual.getResults().get(0).parsedData.score);
+        assertEquals(ImmutableMap.of(
+                "M", 1L,
+                "N", 2L,
+                "hoge", "fuga"
+        ), actual.getResults().get(0).parsedData.params);
+        assertEquals(1, actual.getResults().get(0).seed);
         assertEquals(1, actual.getResults().get(0).seed);
     }
 
