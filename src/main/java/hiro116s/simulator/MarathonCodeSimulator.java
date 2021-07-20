@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
@@ -40,11 +41,20 @@ public class MarathonCodeSimulator {
 
     public static void main(String[] args) {
         final Arguments arguments = parseArgs(args);
+        try {
+            Files.createDirectories(arguments.stdoutDir.toPath());
+            Files.createDirectories(arguments.logOutputDir.toPath());
+        } catch (IOException e) {
+            System.err.println("Failed to create required directories");
+            e.printStackTrace();
+            System.exit(1);
+        }
+
         new MarathonCodeSimulator(
                 ConcurrentCommandLineSimulator.create(
                         arguments.numThreads,
                         LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList()),
-                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.directory)),
+                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.stdoutDir, arguments.directory)),
                 arguments
         ).run();
     }
@@ -58,7 +68,7 @@ public class MarathonCodeSimulator {
                 arguments.additionalNote
         );
         final String logFilePath = String.format("%s/%s",
-                arguments.logOutputDir,
+                arguments.logOutputDir.getPath(),
                 logFileName
         );
         try (final BufferedWriter bw = new BufferedWriter(new FileWriter(logFilePath))) {
@@ -113,8 +123,11 @@ public class MarathonCodeSimulator {
         @Option(name = "--maxSeed", usage = "max seed")
         private int maxSeed = 100;
 
-        @Option(name = "--logOutputDir", usage = "log output directory")
-        private String logOutputDir = "./log";
+        @Option(name = "--logOutputDir", usage = "log output directory", handler = FileOptionHandler.class)
+        private File logOutputDir = new File("./log");
+
+        @Option(name = "--stdoutDir", usage = "log output directory", handler = FileOptionHandler.class)
+        private File stdoutDir = new File("./stdout");
 
         @Option(name = "--additionalNote", usage = "additional note for file name")
         private String additionalNote = "";
