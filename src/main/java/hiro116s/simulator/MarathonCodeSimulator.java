@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -64,7 +65,7 @@ public class MarathonCodeSimulator {
 
         final String logFileName = String.format("%s-%s%s.log",
                 LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
-                getGitCommitHash(),
+                Optional.ofNullable(arguments.gitCommitHash).orElseGet(this::getGitCommitHash),
                 arguments.additionalNote
         );
         final String logFilePath = String.format("%s/%s",
@@ -126,11 +127,14 @@ public class MarathonCodeSimulator {
         @Option(name = "--logOutputDir", usage = "log output directory", handler = FileOptionHandler.class)
         private File logOutputDir = new File("./log");
 
-        @Option(name = "--stdoutDir", usage = "log output directory", handler = FileOptionHandler.class)
+        @Option(name = "--stdoutDir", usage = "standard output directory", handler = FileOptionHandler.class)
         private File stdoutDir = new File("./stdout");
 
         @Option(name = "--additionalNote", usage = "additional note for file name")
         private String additionalNote = "";
+
+        @Option(name = "--gitCommitHash", usage = "Git commit hash used for file name of log output")
+        private String gitCommitHash = null;
 
         @Option(name = "--s3", usage = "s3 option")
         private boolean shouldUploadToS3 = false;
