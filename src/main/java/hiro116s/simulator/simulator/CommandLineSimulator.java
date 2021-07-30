@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +55,7 @@ public class CommandLineSimulator implements Simulator {
             exec = processBuilder.start();
             try (final InputStreamReader inputStreamReader = new InputStreamReader(exec.getErrorStream())) {
                 final ParsedData parsedData = CharStreams.readLines(inputStreamReader, new OutputLineProcessor());
-                Files.copy(exec.getInputStream(), Paths.get(outputDirectory.getPath(), String.format("%d.txt", seed)));
+                Files.copy(exec.getInputStream(), Paths.get(outputDirectory.getPath(), String.format("%d.txt", seed)), StandardCopyOption.REPLACE_EXISTING);
                 // TODO: Include elapsed time in parsed data
                 System.out.println(String.format("End seed %d, elapsed time: %d ms", seed, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
                 return new SimulationResults(Lists.newArrayList(new Result(seed, parsedData)));
