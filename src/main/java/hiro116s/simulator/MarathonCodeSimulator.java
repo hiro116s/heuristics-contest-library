@@ -1,10 +1,15 @@
 package hiro116s.simulator;
 
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
+import hiro116s.simulator.dataset.writer.CompositeSimulationResultsWriter;
+import hiro116s.simulator.dataset.writer.DynamoDbSimulationResultsWriter;
+import hiro116s.simulator.dataset.writer.FileSimulationResultsWriter;
+import hiro116s.simulator.dataset.writer.S3SimulationResultsWriter;
+import hiro116s.simulator.dataset.writer.SimulationResultsWriter;
 import hiro116s.simulator.model.CommandTemplate;
 import hiro116s.simulator.model.SimulationResults;
 import hiro116s.simulator.option.CommandTemplateOptionHandler;
@@ -14,17 +19,20 @@ import hiro116s.simulator.simulator.Simulator;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.spi.FileOptionHandler;
+import org.kohsuke.args4j.spi.OneArgumentOptionHandler;
+import org.kohsuke.args4j.spi.Setter;
+import software.amazon.awssdk.http.apache.ApacheHttpClient;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -33,14 +41,14 @@ import java.util.stream.LongStream;
  */
 public class MarathonCodeSimulator {
     private final Simulator simulator;
-    private final Arguments arguments;
+    private final SimulationResultsWriter simulationResultsWriter;
 
-    public MarathonCodeSimulator(final Simulator simulator, final Arguments arguments) {
+    public MarathonCodeSimulator(Simulator simulator, SimulationResultsWriter simulationResultsWriter) {
         this.simulator = simulator;
-        this.arguments = arguments;
+        this.simulationResultsWriter = simulationResultsWriter;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         final Arguments arguments = parseArgs(args);
         try {
             Files.createDirectories(arguments.stdoutDir.toPath());
@@ -56,48 +64,40 @@ public class MarathonCodeSimulator {
                         arguments.numThreads,
                         LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList()),
                         seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.stdoutDir, arguments.directory)),
-                arguments
+                createSimulationResultsWriter(arguments)
         ).run();
     }
 
-    private void run() {
-        final SimulationResults results = simulator.simulate();
-
+    private static SimulationResultsWriter createSimulationResultsWriter(final Arguments arguments) {
+        final String currentTimeRaw = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
+        final String gitCommitHash = arguments.getGitCommitHash();
         final String logFileName = String.format("%s-%s%s.log",
-                LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
-                Optional.ofNullable(arguments.gitCommitHash).orElseGet(this::getGitCommitHash),
+                currentTimeRaw,
+                gitCommitHash,
                 arguments.additionalNote
         );
         final String logFilePath = String.format("%s/%s",
                 arguments.logOutputDir.getPath(),
                 logFileName
         );
-        try (final BufferedWriter bw = new BufferedWriter(new FileWriter(logFilePath))) {
-            bw.write(results.toJsonString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        final ImmutableList.Builder<SimulationResultsWriter> builder = ImmutableList.<SimulationResultsWriter>builder()
+                .add(new FileSimulationResultsWriter(logFilePath));
         if (arguments.shouldUploadToS3) {
-            final AmazonS3 s3 = AmazonS3ClientBuilder.standard()
-                    .withRegion(Regions.AP_NORTHEAST_1)
-                    .build();
-            if (!s3.doesBucketExistV2(arguments.s3BucketName)) {
-                s3.createBucket(arguments.s3BucketName);
-            }
-            s3.putObject(arguments.s3BucketName, arguments.s3KeyName + "/log/" + logFileName, new File(logFilePath));
+            builder.add(new S3SimulationResultsWriter(
+                    AmazonS3ClientBuilder.standard().withRegion(Regions.AP_NORTHEAST_1).build(),
+                    arguments.s3BucketName,
+                    String.format("%s/log/%s", arguments.contestName, logFileName)
+            ));
         }
+        if (arguments.dynamoDbUpdateType != DynamoDbUpdateType.NONE) {
+            builder.add(new DynamoDbSimulationResultsWriter(arguments.dynamoDBClient(), arguments.dynamoDbTableName, arguments.contestName, currentTimeRaw, gitCommitHash));
+        }
+        return new CompositeSimulationResultsWriter(builder.build());
     }
 
-    // TODO: Use JGit library
-    private String getGitCommitHash() {
-        try {
-            final Runtime runtime = Runtime.getRuntime();
-            try (final InputStreamReader inputStreamReader = new InputStreamReader(runtime.exec("git rev-parse HEAD").getInputStream())) {
-                return CharStreams.readLines(inputStreamReader).get(0).substring(0, 6);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private void run() throws IOException {
+        final SimulationResults results = simulator.simulate();
+        simulationResultsWriter.write(results);
     }
 
     private static Arguments parseArgs(final String[] args) {
@@ -136,14 +136,29 @@ public class MarathonCodeSimulator {
         @Option(name = "--gitCommitHash", usage = "Git commit hash used for file name of log output")
         private String gitCommitHash = null;
 
+        private String getGitCommitHash() {
+            if (gitCommitHash != null) {
+                return gitCommitHash;
+            }
+            try {
+                // TODO: Use JGit library
+                final Runtime runtime = Runtime.getRuntime();
+                try (final InputStreamReader inputStreamReader = new InputStreamReader(runtime.exec("git rev-parse HEAD").getInputStream())) {
+                    return CharStreams.readLines(inputStreamReader).get(0).substring(0, 6);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         @Option(name = "--s3", usage = "s3 option")
         private boolean shouldUploadToS3 = false;
 
         @Option(name = "--s3bucket", usage = "s3 bucket name")
         private String s3BucketName = "hiro116s.s3bucket.jp";
 
-        @Option(name = "--s3KeyName", usage = "s3 key name")
-        private String s3KeyName;
+        @Option(name = "--contestName", usage = "contest name")
+        private String contestName = null;
 
         @Option(name = "--commandTemplate",
                 usage = "Command template which you want to use for simulation.  A template array must include at least $SEED value",
@@ -156,8 +171,51 @@ public class MarathonCodeSimulator {
 
         public void validate() {
             if (shouldUploadToS3) {
-                Preconditions.checkArgument(s3BucketName != null && s3KeyName != null, "--s3KeyName and --s3Bucket option must be set with --s3 option");
+                Preconditions.checkArgument(s3BucketName != null && contestName != null, "--s3KeyName and --s3Bucket option must be set with --s3 option");
             }
+            if (dynamoDbUpdateType != DynamoDbUpdateType.NONE) {
+                Preconditions.checkArgument(contestName != null, "contestName option must be set with --dynamo {LOCAL,PRODUCTION} option");
+            }
+        }
+
+        @Option(name = "--dynamo",
+                usage = "NONE: DynamoDB shouldn't be updated\n" +
+                        "LOCAL: DynamoDB will be access via 'http://localhost:8000/'\n" +
+                        "PRODUCTION: DyanmoDB will be accessed using default aws client config defined in ~/.aws/config",
+                handler = DynamoDbUpdateTypeOptionHandler.class)
+        private DynamoDbUpdateType dynamoDbUpdateType = DynamoDbUpdateType.NONE;
+
+        @Option(name = "--dynamoDbTableName", usage = "dynamoDB table name")
+        private String dynamoDbTableName = "contest_scores";
+
+        public DynamoDbClient dynamoDBClient() {
+            if (dynamoDbUpdateType == DynamoDbUpdateType.LOCAL) {
+                return DynamoDbClient.builder()
+                        .httpClientBuilder(ApacheHttpClient.builder())
+                        .endpointOverride(URI.create("http://localhost:8000/"))
+                        .build();
+            } else if (dynamoDbUpdateType == DynamoDbUpdateType.PRODUCTION) {
+                return DynamoDbClient.create();
+            } else {
+                throw new IllegalArgumentException("DynamoDbUpdateType is NONE, so dynamoDBClient can't be instantiated.");
+            }
+        }
+    }
+
+    private enum DynamoDbUpdateType {
+        NONE,
+        LOCAL,
+        PRODUCTION
+    }
+
+    public static class DynamoDbUpdateTypeOptionHandler extends OneArgumentOptionHandler<DynamoDbUpdateType> {
+        public DynamoDbUpdateTypeOptionHandler(CmdLineParser parser, OptionDef option, Setter<DynamoDbUpdateType> setter) {
+            super(parser, option, setter);
+        }
+
+        @Override
+        protected DynamoDbUpdateType parse(String argument) throws NumberFormatException {
+            return DynamoDbUpdateType.valueOf(argument);
         }
     }
 }
