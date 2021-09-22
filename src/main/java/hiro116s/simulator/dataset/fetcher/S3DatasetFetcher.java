@@ -24,12 +24,10 @@ public class S3DatasetFetcher implements DatasetFetcher {
 
     private final String s3BucketName;
     private final String s3KeyPrefix;
-    private final boolean shouldShowOnlyFileName;
 
-    public S3DatasetFetcher(String s3BucketName, String s3KeyPrefix, boolean shouldShowOnlyFileName) {
+    public S3DatasetFetcher(String s3BucketName, String s3KeyPrefix) {
         this.s3BucketName = s3BucketName;
         this.s3KeyPrefix = s3KeyPrefix;
-        this.shouldShowOnlyFileName = shouldShowOnlyFileName;
     }
 
     @Override
@@ -40,7 +38,7 @@ public class S3DatasetFetcher implements DatasetFetcher {
         if (!s3.doesBucketExistV2(s3BucketName)) {
             throw new AmazonS3Exception("No such bucket: " + s3BucketName);
         }
-        final List<S3ObjectSummary> objectSummaries = s3.listObjectsV2(s3BucketName, s3KeyPrefix).getObjectSummaries();
+        final List<S3ObjectSummary> objectSummaries = s3.listObjectsV2(s3BucketName, s3KeyPrefix + "/log").getObjectSummaries();
         final ImmutableList.Builder<EvaluationResults> builder = ImmutableList.builder();
         for (final S3ObjectSummary objectSummary : objectSummaries) {
             if (objectSummary.getKey().endsWith("/")) {
@@ -53,15 +51,11 @@ public class S3DatasetFetcher implements DatasetFetcher {
                 builder.add(results);
             }
         }
-        return new Dataset(builder.build());
+        return Dataset.create(builder.build());
     }
 
     private String getFilePath(String key) {
-        if (shouldShowOnlyFileName) {
-            final String[] ws = key.split("/");
-            return ws[ws.length - 1];
-        } else {
-            return key;
-        }
+        final String[] ws = key.split("/");
+        return ws[ws.length - 1];
     }
 }

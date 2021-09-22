@@ -40,6 +40,8 @@ import java.util.stream.LongStream;
  * Tool to evaluate the score in the heuristic contest.
  */
 public class MarathonCodeSimulator {
+    static final String DYNAMO_DB_TABLE_NAME = "contest_scores";
+
     private final Simulator simulator;
     private final SimulationResultsWriter simulationResultsWriter;
 
@@ -179,14 +181,14 @@ public class MarathonCodeSimulator {
         }
 
         @Option(name = "--dynamo",
-                usage = "NONE: DynamoDB shouldn't be updated\n" +
-                        "LOCAL: DynamoDB will be access via 'http://localhost:8000/'\n" +
+                usage = "NONE: DynamoDB won't be updated\n" +
+                        "LOCAL: Lolcal DynamoDB ('http://localhost:8000') will be accessed\n" +
                         "PRODUCTION: DyanmoDB will be accessed using default aws client config defined in ~/.aws/config",
                 handler = DynamoDbUpdateTypeOptionHandler.class)
         private DynamoDbUpdateType dynamoDbUpdateType = DynamoDbUpdateType.NONE;
 
         @Option(name = "--dynamoDbTableName", usage = "dynamoDB table name")
-        private String dynamoDbTableName = "contest_scores";
+        private String dynamoDbTableName = DYNAMO_DB_TABLE_NAME;
 
         public DynamoDbClient dynamoDBClient() {
             if (dynamoDbUpdateType == DynamoDbUpdateType.LOCAL) {

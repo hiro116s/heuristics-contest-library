@@ -17,11 +17,9 @@ public class FileDatasetFetcher implements DatasetFetcher {
     };
 
     private final String logInputDir;
-    private final boolean shouldShowOnlyFileName;
 
-    public FileDatasetFetcher(String logInputDir, boolean shouldShowOnlyFileName) {
+    public FileDatasetFetcher(String logInputDir) {
         this.logInputDir = logInputDir;
-        this.shouldShowOnlyFileName = shouldShowOnlyFileName;
     }
 
     @Override
@@ -32,12 +30,8 @@ public class FileDatasetFetcher implements DatasetFetcher {
             if (file.isDirectory()) {
                 continue;
             }
-            final EvaluationResults results = new EvaluationResults(
-                    shouldShowOnlyFileName ? file.getName() : file.getPath(),
-                    new ObjectMapper().readValue(file, TYPE_REFERENCE)
-            );
-            builder.add(results);
+            builder.add(new EvaluationResults(file.getName(), new ObjectMapper().readValue(file, TYPE_REFERENCE)));
         }
-        return new Dataset(builder.build());
+        return Dataset.create(builder.build());
     }
 }

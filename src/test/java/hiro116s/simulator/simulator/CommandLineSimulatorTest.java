@@ -1,6 +1,7 @@
 package hiro116s.simulator.simulator;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import hiro116s.simulator.model.ImmutableCommandTemplate;
 import hiro116s.simulator.model.SimulationResults;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +15,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -91,5 +96,13 @@ class CommandLineSimulatorTest {
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);
         assertEquals(1, actual.getResults().get(0).seed);
+    }
+
+    @Test
+    void test() {
+        List<String> l = Lists.newArrayList("a:b", "a:d", "b:c");
+        Map<String, List<String>> map = l.stream().collect(
+                Collectors.groupingBy(s -> s.split(":")[0]));
+
     }
 }
