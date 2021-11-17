@@ -48,6 +48,6 @@ public class EvaluationResults {
         for (final Result result : results) {
             res += result.parsedData.score;// / maxScoresBySeed.get(result.seed);
         }
-        return res / results.size();
+        return res;
     }
 }
