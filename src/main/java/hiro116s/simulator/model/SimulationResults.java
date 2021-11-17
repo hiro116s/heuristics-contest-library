@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SimulationResults {
     private final List<Result> results;
@@ -29,6 +30,13 @@ public class SimulationResults {
 
     public String toJsonString() throws JsonProcessingException {
         final ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(results);
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < results.size(); i++) {
+            sb.append(objectMapper.writeValueAsString(results.get(i)));
+            if (i != results.size() - 1) {
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
     }
 }

@@ -41,6 +41,7 @@ import java.util.stream.LongStream;
  * Tool to evaluate the score in the heuristic contest.
  */
 public class MarathonCodeSimulator {
+    private static final String CURRENT_TIME_RAW = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
     static final String DYNAMO_DB_TABLE_NAME = "contest_scores";
 
     private final Simulator simulator;
@@ -61,24 +62,18 @@ public class MarathonCodeSimulator {
             e.printStackTrace();
             System.exit(1);
         }
-
         new MarathonCodeSimulator(
                 ConcurrentCommandLineSimulator.create(
                         arguments.numThreads,
                         LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList()),
-                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.stdoutDir, new OutputLineProcessor(arguments.debugMode), arguments.directory)),
+                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.stdoutDir, new OutputLineProcessor(arguments.debugMode), arguments.directory, arguments.getSimulationId())),
                 createSimulationResultsWriter(arguments)
         ).run();
     }
 
     private static SimulationResultsWriter createSimulationResultsWriter(final Arguments arguments) {
-        final String currentTimeRaw = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
         final String gitCommitHash = arguments.getGitCommitHash();
-        final String logFileName = String.format("%s-%s%s.log",
-                currentTimeRaw,
-                gitCommitHash,
-                arguments.additionalNote
-        );
+        final String logFileName = arguments.getSimulationId();
         final String logFilePath = String.format("%s/%s",
                 arguments.logOutputDir.getPath(),
                 logFileName
@@ -93,7 +88,7 @@ public class MarathonCodeSimulator {
             ));
         }
         if (arguments.dynamoDbUpdateType != DynamoDbUpdateType.NONE) {
-            builder.add(new DynamoDbSimulationResultsWriter(arguments.dynamoDBClient(), arguments.dynamoDbTableName, arguments.contestName, currentTimeRaw, gitCommitHash));
+            builder.add(new DynamoDbSimulationResultsWriter(arguments.dynamoDBClient(), arguments.dynamoDbTableName, arguments.contestName, CURRENT_TIME_RAW, gitCommitHash));
         }
         return new CompositeSimulationResultsWriter(builder.build());
     }
@@ -205,6 +200,14 @@ public class MarathonCodeSimulator {
             } else {
                 throw new IllegalArgumentException("DynamoDbUpdateType is NONE, so dynamoDBClient can't be instantiated.");
             }
+        }
+
+        public String getSimulationId() {
+            return String.format("%s-%s%s.log",
+                    CURRENT_TIME_RAW,
+                    getGitCommitHash(),
+                    additionalNote
+            );
         }
     }
 

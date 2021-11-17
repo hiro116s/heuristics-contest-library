@@ -2,6 +2,7 @@ package hiro116s.simulator.simulator;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import hiro116s.simulator.lineprocessor.OutputLineProcessor;
 import hiro116s.simulator.model.ImmutableCommandTemplate;
 import hiro116s.simulator.model.SimulationResults;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +36,7 @@ class CommandLineSimulatorTest {
                 .addCommandTemplate("-c")
                 .addCommandTemplate("echo Score = $SEED 1>&2")
                 .build();
-        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), null);
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a");
 
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
@@ -50,7 +51,7 @@ class CommandLineSimulatorTest {
                 .addCommandTemplate("-c")
                 .addCommandTemplate("echo Score = $SEED\\\\nParam:M = 1\\\\nParam:N = 2\\\\nParam:hoge = fuga 1>&2")
                 .build();
-        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), null);
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a");
 
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
@@ -70,7 +71,7 @@ class CommandLineSimulatorTest {
                 .addCommandTemplate("-c")
                 .addCommandTemplate("echo abc && echo Score = $SEED 1>&2")
                 .build();
-        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), null);
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a");
 
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
@@ -91,7 +92,7 @@ class CommandLineSimulatorTest {
                 .build();
 
         Files.writeString(Paths.get(tempDir.toString(), "in1.txt"), "Score = 1\n", StandardOpenOption.CREATE_NEW);
-        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), null);
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a");
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);

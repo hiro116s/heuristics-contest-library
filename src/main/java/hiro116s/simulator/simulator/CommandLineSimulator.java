@@ -31,16 +31,20 @@ public class CommandLineSimulator implements Simulator {
     @CheckForNull
     private final File processRootDirectory;
 
+    private final String simulationId;
+
     public CommandLineSimulator(long seed,
                                 final CommandTemplate commandTemplate,
                                 final File outputDirectory,
                                 final OutputLineProcessor outputLineProcessor,
-                                @CheckForNull final File processRootDirectory) {
+                                @CheckForNull final File processRootDirectory,
+                                final String simulationId) {
         this.seed = seed;
         this.commandTemplate = commandTemplate;
         this.outputDirectory = outputDirectory;
         this.outputLineProcessor = outputLineProcessor;
         this.processRootDirectory = processRootDirectory;
+        this.simulationId = simulationId;
     }
 
     @Override
@@ -62,7 +66,7 @@ public class CommandLineSimulator implements Simulator {
                 final ParsedData parsedData = CharStreams.readLines(inputStreamReader, outputLineProcessor);
                 // TODO: Include elapsed time in parsed data
                 System.out.println(String.format("End seed %d, elapsed time: %d ms", seed, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
-                return new SimulationResults(Lists.newArrayList(new Result(seed, parsedData)));
+                return new SimulationResults(Lists.newArrayList(new Result(seed, simulationId, parsedData)));
             }
         } catch (final IOException e) {
             throw new RuntimeException(e);

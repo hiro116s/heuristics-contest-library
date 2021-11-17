@@ -46,6 +46,7 @@ public class DynamoDbDatasetFetcher implements DatasetFetcher {
                 builder.add(new EvaluationResults(evaluationId, maps.stream()
                         .map(m -> new Result(
                                 Long.parseLong(m.get("evaluation_id").s().split("#")[2]),
+                                null,
                                 gson.fromJson(m.get("data").s(), ParsedData.class)))
                         .collect(Collectors.toList())))
         );
