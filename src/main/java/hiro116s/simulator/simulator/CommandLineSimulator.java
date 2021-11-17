@@ -26,16 +26,20 @@ public class CommandLineSimulator implements Simulator {
 
     private final File outputDirectory;
 
+    private final OutputLineProcessor outputLineProcessor;
+
     @CheckForNull
     private final File processRootDirectory;
 
     public CommandLineSimulator(long seed,
                                 final CommandTemplate commandTemplate,
                                 final File outputDirectory,
+                                final OutputLineProcessor outputLineProcessor,
                                 @CheckForNull final File processRootDirectory) {
         this.seed = seed;
         this.commandTemplate = commandTemplate;
         this.outputDirectory = outputDirectory;
+        this.outputLineProcessor = outputLineProcessor;
         this.processRootDirectory = processRootDirectory;
     }
 
@@ -54,7 +58,7 @@ public class CommandLineSimulator implements Simulator {
         try {
             exec = processBuilder.start();
             try (final InputStreamReader inputStreamReader = new InputStreamReader(exec.getErrorStream())) {
-                final ParsedData parsedData = CharStreams.readLines(inputStreamReader, new OutputLineProcessor());
+                final ParsedData parsedData = CharStreams.readLines(inputStreamReader, outputLineProcessor);
                 Files.copy(exec.getInputStream(), Paths.get(outputDirectory.getPath(), String.format("%d.txt", seed)), StandardCopyOption.REPLACE_EXISTING);
                 // TODO: Include elapsed time in parsed data
                 System.out.println(String.format("End seed %d, elapsed time: %d ms", seed, stopwatch.elapsed(TimeUnit.MILLISECONDS)));

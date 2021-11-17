@@ -10,6 +10,7 @@ import hiro116s.simulator.dataset.writer.DynamoDbSimulationResultsWriter;
 import hiro116s.simulator.dataset.writer.FileSimulationResultsWriter;
 import hiro116s.simulator.dataset.writer.S3SimulationResultsWriter;
 import hiro116s.simulator.dataset.writer.SimulationResultsWriter;
+import hiro116s.simulator.lineprocessor.OutputLineProcessor;
 import hiro116s.simulator.model.CommandTemplate;
 import hiro116s.simulator.model.SimulationResults;
 import hiro116s.simulator.option.CommandTemplateOptionHandler;
@@ -65,7 +66,7 @@ public class MarathonCodeSimulator {
                 ConcurrentCommandLineSimulator.create(
                         arguments.numThreads,
                         LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList()),
-                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.stdoutDir, arguments.directory)),
+                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.stdoutDir, new OutputLineProcessor(arguments.debugMode), arguments.directory)),
                 createSimulationResultsWriter(arguments)
         ).run();
     }
@@ -170,6 +171,9 @@ public class MarathonCodeSimulator {
 
         @Option(name = "--commandDirectory", usage = "Directory on which you want to run the simulation", handler = FileOptionHandler.class)
         private File directory = null;
+
+        @Option(name = "--debugMode", usage = "debug mode to output all standard error output")
+        private boolean debugMode = false;
 
         public void validate() {
             if (shouldUploadToS3) {

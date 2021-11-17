@@ -15,8 +15,17 @@ public class OutputLineProcessor implements LineProcessor<ParsedData> {
     private double maxScore = NO_FIELD;
     private Map<String, Object> params = new HashMap<>();
 
+    private final boolean debugMode;
+
+    public OutputLineProcessor(boolean debugMode) {
+        this.debugMode = debugMode;
+    }
+
     @Override
     public boolean processLine(String line) {
+        if (debugMode) {
+            System.out.println(line);
+        }
         if (line.startsWith("Score")) {
             final String[] ws = line.split(" = ");
             score = Double.parseDouble(ws[1]);
