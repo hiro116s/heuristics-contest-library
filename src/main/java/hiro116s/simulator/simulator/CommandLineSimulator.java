@@ -48,7 +48,8 @@ public class CommandLineSimulator implements Simulator {
         // TODO: Use log4j
         System.out.println("Start seed " + seed);
         final Stopwatch stopwatch = Stopwatch.createStarted();
-        final ProcessBuilder processBuilder = new ProcessBuilder(commandTemplate.build(seed));
+        final ProcessBuilder processBuilder = new ProcessBuilder(commandTemplate.build(seed))
+                .redirectOutput(Paths.get(outputDirectory.getPath(), String.format("%d.txt", seed)).toFile());
         commandTemplate.inRedirectFilePathOrEmpty(seed).ifPresent(
                 redirectFilePath -> processBuilder.redirectInput(ProcessBuilder.Redirect.from(new File(redirectFilePath)))
         );
@@ -59,7 +60,6 @@ public class CommandLineSimulator implements Simulator {
             exec = processBuilder.start();
             try (final InputStreamReader inputStreamReader = new InputStreamReader(exec.getErrorStream())) {
                 final ParsedData parsedData = CharStreams.readLines(inputStreamReader, outputLineProcessor);
-                Files.copy(exec.getInputStream(), Paths.get(outputDirectory.getPath(), String.format("%d.txt", seed)), StandardCopyOption.REPLACE_EXISTING);
                 // TODO: Include elapsed time in parsed data
                 System.out.println(String.format("End seed %d, elapsed time: %d ms", seed, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
                 return new SimulationResults(Lists.newArrayList(new Result(seed, parsedData)));
