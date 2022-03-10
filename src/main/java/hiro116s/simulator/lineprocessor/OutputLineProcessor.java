@@ -51,7 +51,9 @@ public class OutputLineProcessor implements LineProcessor<ParsedData> {
 
     @Override
     public ParsedData getResult() {
-        Preconditions.checkArgument(score != NO_FIELD, "No score statement");
+        if (score == NO_FIELD) {
+            System.err.println("No score statement");
+        }
         return new ParsedData(score, maxScore, params);
     }
 }
