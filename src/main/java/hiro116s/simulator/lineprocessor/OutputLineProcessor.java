@@ -4,6 +4,7 @@ package hiro116s.simulator.lineprocessor;
 import com.google.common.base.Preconditions;
 import com.google.common.io.LineProcessor;
 import hiro116s.simulator.model.ParsedData;
+import hiro116s.simulator.model.ParsedData.Status;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +50,9 @@ public class OutputLineProcessor implements LineProcessor<ParsedData> {
     public ParsedData getResult() {
         if (score == NO_FIELD) {
             System.out.println("No score statement");
+            return new ParsedData(-1, Status.NO_SCORE_STATEMENT, params);
+        } else {
+            return new ParsedData(score, Status.OK, params);
         }
-        return new ParsedData(score, params);
     }
 }
