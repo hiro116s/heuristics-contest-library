@@ -1,11 +1,10 @@
 package hiro116s.simulator.simulator;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import hiro116s.simulator.lineprocessor.OutputLineProcessor;
 import hiro116s.simulator.model.ImmutableCommandTemplate;
+import hiro116s.simulator.model.ParsedData;
 import hiro116s.simulator.model.SimulationResults;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -14,18 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommandLineSimulatorTest {
+    private static final Duration DEFAULT_TIMEOUT = Duration.ofMillis(Long.MAX_VALUE);
+
     @TempDir
     Path tempDir;
 
@@ -36,7 +31,7 @@ class CommandLineSimulatorTest {
                 .addCommandTemplate("-c")
                 .addCommandTemplate("echo Score = $SEED 1>&2")
                 .build();
-        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a");
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a", DEFAULT_TIMEOUT);
 
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
@@ -51,7 +46,7 @@ class CommandLineSimulatorTest {
                 .addCommandTemplate("-c")
                 .addCommandTemplate("echo Score = $SEED\\\\nParam:M = 1\\\\nParam:N = 2\\\\nParam:hoge = fuga 1>&2")
                 .build();
-        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a");
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a", DEFAULT_TIMEOUT);
 
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
@@ -71,7 +66,7 @@ class CommandLineSimulatorTest {
                 .addCommandTemplate("-c")
                 .addCommandTemplate("echo abc && echo Score = $SEED 1>&2")
                 .build();
-        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a");
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a", DEFAULT_TIMEOUT);
 
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
@@ -92,7 +87,7 @@ class CommandLineSimulatorTest {
                 .build();
 
         Files.writeString(Paths.get(tempDir.toString(), "in1.txt"), "Score = 1\n", StandardOpenOption.CREATE_NEW);
-        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a");
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a", DEFAULT_TIMEOUT);
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);
@@ -100,10 +95,32 @@ class CommandLineSimulatorTest {
     }
 
     @Test
-    void test() {
-        List<String> l = Lists.newArrayList("a:b", "a:d", "b:c");
-        Map<String, List<String>> map = l.stream().collect(
-                Collectors.groupingBy(s -> s.split(":")[0]));
+    void overTimeout() {
+        final ImmutableCommandTemplate commandTemplate = ImmutableCommandTemplate.builder()
+                .addCommandTemplate("sh")
+                .addCommandTemplate("-c")
+                .addCommandTemplate("sleep $SEED")  // Sleep $SEED seconds for testing purpose
+                .build();
 
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a", Duration.ofMillis(990L));
+        final SimulationResults actual = simulator.simulate();
+        assertEquals(1, actual.getResults().size());
+        assertEquals(ParsedData.TIMEOUT_DATA, actual.getResults().get(0).parsedData);
+        assertEquals(1, actual.getResults().get(0).seed);
+    }
+
+    @Test
+    void withinTimeout() {
+        final ImmutableCommandTemplate commandTemplate = ImmutableCommandTemplate.builder()
+                .addCommandTemplate("sh")
+                .addCommandTemplate("-c")
+                .addCommandTemplate("sleep 1 && echo Score = $SEED 1>&2")
+                .build();
+
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a", Duration.ofMillis(1015L));
+        final SimulationResults actual = simulator.simulate();
+        assertEquals(1, actual.getResults().size());
+        assertEquals(1, actual.getResults().get(0).parsedData.score);
+        assertEquals(1, actual.getResults().get(0).seed);
     }
 }

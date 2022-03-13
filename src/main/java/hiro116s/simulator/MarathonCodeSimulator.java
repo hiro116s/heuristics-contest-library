@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
@@ -66,7 +67,7 @@ public class MarathonCodeSimulator {
                 ConcurrentCommandLineSimulator.create(
                         arguments.numThreads,
                         LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList()),
-                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.stdoutDir, new OutputLineProcessor(arguments.debugMode), arguments.directory, arguments.getSimulationId())),
+                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.stdoutDir, new OutputLineProcessor(arguments.debugMode), arguments.directory, arguments.getSimulationId(), Duration.ofMillis(arguments.timeoutMs))),
                 createSimulationResultsWriter(arguments)
         ).run();
     }
@@ -133,6 +134,9 @@ public class MarathonCodeSimulator {
 
         @Option(name = "--gitCommitHash", usage = "Git commit hash used for file name of log output")
         private String gitCommitHash = null;
+
+        @Option(name = "--timeout", usage = "Timeout value (milliseconds)")
+        public long timeoutMs = Long.MAX_VALUE;
 
         private String getGitCommitHash() {
             if (gitCommitHash != null) {
