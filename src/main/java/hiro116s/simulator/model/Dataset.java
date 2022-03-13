@@ -48,7 +48,6 @@ public class Dataset {
         final List<EvaluationResults> sortedResults = new ArrayList<>(resultsAll);
         sortedResults.sort(Comparator.comparingDouble(r -> -r.evalScore(maxScoresBySeed)));
         final StringBuilder res = new StringBuilder();
-        res.append(String.format("Max score: %7f\n", resultsAll.get(0).results.stream().map(r -> r.parsedData.maxScore).reduce(0.0, Double::sum)));
         res.append(sortedResults.stream()
                 .map(results -> String.format("%s %s %7f", results.filePath, results.params.entrySet(), results.evalScore(maxScoresBySeed)))
                 .collect(Collectors.joining("\n")));

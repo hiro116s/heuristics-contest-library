@@ -12,7 +12,6 @@ import static hiro116s.simulator.model.ParsedData.NO_FIELD;
 
 public class OutputLineProcessor implements LineProcessor<ParsedData> {
     private double score = NO_FIELD;
-    private double maxScore = NO_FIELD;
     private Map<String, Object> params = new HashMap<>();
 
     private final boolean debugMode;
@@ -29,9 +28,6 @@ public class OutputLineProcessor implements LineProcessor<ParsedData> {
         if (line.startsWith("Score")) {
             final String[] ws = line.split(" = ");
             score = Double.parseDouble(ws[1]);
-        } else if (line.startsWith("Max")) {
-            final String[] ws = line.split(" = ");
-            maxScore = Double.parseDouble(ws[1]);
         } else if (line.startsWith("Param:")) {
             final String[] ws = line.replace("Param:", "").split(" = ");
             Preconditions.checkArgument(!params.containsKey(ws[0]));
@@ -52,8 +48,8 @@ public class OutputLineProcessor implements LineProcessor<ParsedData> {
     @Override
     public ParsedData getResult() {
         if (score == NO_FIELD) {
-            System.err.println("No score statement");
+            System.out.println("No score statement");
         }
-        return new ParsedData(score, maxScore, params);
+        return new ParsedData(score, params);
     }
 }

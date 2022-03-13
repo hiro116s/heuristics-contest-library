@@ -11,31 +11,31 @@ class DatasetTest {
     void test() {
         Dataset dataset = Dataset.create(ImmutableList.of(
                 new EvaluationResults("path1", ImmutableList.of(
-                        new Result(1L, "a", new ParsedData(1.0, 1.0, ImmutableMap.of(
+                        new Result(1L, "a", new ParsedData(1.0, ImmutableMap.of(
                                 "N", 1,
                                 "M", 1,
                                 "X", 10
                         ))),
-                        new Result(2L, "b", new ParsedData(10.0, 10.0, ImmutableMap.of(
+                        new Result(2L, "b", new ParsedData(10.0, ImmutableMap.of(
                                 "N", 1,
                                 "M", 2
                         ))),
-                        new Result(3L, "c", new ParsedData(100.0, 100.0, ImmutableMap.of(
+                        new Result(3L, "c", new ParsedData(100.0, ImmutableMap.of(
                                 "N", 2,
                                 "M", 2
                         )))
                 ))
         ));
-        assertEquals("Max score: 11.000000\n" +
+        assertEquals(
                 "path1 [N=2] 100.000000\n" +
                 "path1 [N=1] 11.000000", dataset.groupBy("N").format());
-        assertEquals("Max score: 1.000000\n" +
+        assertEquals(
                 "path1 [M=2] 110.000000\n" +
                 "path1 [M=1] 1.000000", dataset.groupBy("M").format());
-        assertEquals("Max score: 110.000000\n" +
+        assertEquals(
                 "path1 [X=N/A] 110.000000\n" +
                 "path1 [X=10] 1.000000", dataset.groupBy("X").format());
-        assertEquals("Max score: 1.000000\n" +
+        assertEquals(
                 "path1 [N=2, M=2] 100.000000\n" +
                 "path1 [N=1, M=2] 10.000000\n" +
                 "path1 [N=1, M=1] 1.000000", dataset.groupBy("N", "M").format());
