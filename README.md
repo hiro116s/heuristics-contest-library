@@ -1,6 +1,6 @@
 # How to run 
 ```bash
-gradle jar
+./gradlew jar
 # MarathonCodeEvaluator template command (local)
 java -cp build/libs/heuristics-contest-library-1.0-SNAPSHOT.jar hiro116s.simulator.MarathonCodeEvaluator --source LOCAL --logInputDir path/to/dir 
 # MarathonCodeEvaluator template command (s3)
