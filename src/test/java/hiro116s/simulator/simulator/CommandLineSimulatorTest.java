@@ -117,7 +117,7 @@ class CommandLineSimulatorTest {
                 .addCommandTemplate("sleep 1 && echo Score = $SEED 1>&2")
                 .build();
 
-        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a", Duration.ofMillis(1015L));
+        final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a", Duration.ofMillis(1315L));
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);

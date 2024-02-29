@@ -11,16 +11,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import hiro116s.simulator.model.Dataset;
-import hiro116s.simulator.model.Result;
 import hiro116s.simulator.model.EvaluationResults;
+import hiro116s.simulator.model.Result;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 
 public class S3DatasetFetcher implements DatasetFetcher {
-    private static final TypeReference<List<Result>> TYPE_REFERENCE = new TypeReference<>() {
+    private static final TypeReference<Result> TYPE_REFERENCE = new TypeReference<>() {
     };
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final String s3BucketName;
     private final String s3KeyPrefix;
@@ -40,18 +43,31 @@ public class S3DatasetFetcher implements DatasetFetcher {
         }
         final List<S3ObjectSummary> objectSummaries = s3.listObjectsV2(s3BucketName, s3KeyPrefix + "/log").getObjectSummaries();
         final ImmutableList.Builder<EvaluationResults> builder = ImmutableList.builder();
+
         for (final S3ObjectSummary objectSummary : objectSummaries) {
+            System.err.println("Reading " + objectSummary.getKey());
             if (objectSummary.getKey().endsWith("/")) {
                 // Skip type=directory
                 continue;
             }
-            try (final S3ObjectInputStream is = s3.getObject(s3BucketName, objectSummary.getKey()).getObjectContent();
-                 final InputStreamReader isr = new InputStreamReader(is)) {
-                final EvaluationResults results = new EvaluationResults(getFilePath(objectSummary.getKey()), new ObjectMapper().readValue(isr, TYPE_REFERENCE));
-                builder.add(results);
-            }
+            final List<Result> rawResults = readResultsFromS3(s3, objectSummary.getKey());
+            final EvaluationResults results = new EvaluationResults(getFilePath(objectSummary.getKey()), rawResults);
+            builder.add(results);
         }
         return Dataset.create(builder.build());
+    }
+
+    private List<Result> readResultsFromS3(final AmazonS3 s3, String key) throws IOException {
+        final List<Result> result = new ArrayList<>();
+        try (final S3ObjectInputStream is = s3.getObject(s3BucketName, key).getObjectContent();
+             final BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+            String line = br.readLine();
+            while (line != null) {
+                result.add(OBJECT_MAPPER.readValue(line, TYPE_REFERENCE));
+                line = br.readLine();
+            }
+        }
+        return result;
     }
 
     private String getFilePath(String key) {
