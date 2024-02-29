@@ -1,15 +1,11 @@
 # How to run 
 ```bash
-# MarathonCodeEvaluator template command
-java -cp build/libs/heuristics-contest-library-1.0-SNAPSHOT.jar hiro116s.simulator.MarathonCodeEvaluator --s3 --s3prefix httf-2020-final
+gradle jar
+# MarathonCodeEvaluator template command (local)
+java -cp build/libs/heuristics-contest-library-1.0-SNAPSHOT.jar hiro116s.simulator.MarathonCodeEvaluator --source LOCAL --logInputDir path/to/dir 
+# MarathonCodeEvaluator template command (s3)
+java -cp build/libs/heuristics-contest-library-1.0-SNAPSHOT.jar hiro116s.simulator.MarathonCodeEvaluator --source S3 --s3bucket S3 --contestName ahc25
+
 # MarathonCodeSimulatro template command
 java -cp build/libs/heuristics-contest-library-1.0-SNAPSHOT.jar hiro116s.simulator.MarathonCodeSimulator --commandTemplate 'java Main $SEED' --minSeed 123 --maxSeed 222 --s3 --dynamoDbUpdateType PRODUCTION --contestName httf-2020-final
-```
-
-# Build scripts for spot instance
-```bash
-ssh -A ((server_name))
-wget https://raw.githubusercontent.com/hiro116s/contest-scripts/master/script.sh
-chmod 755 script.sh
-./script.sh
 ```
