@@ -1,6 +1,7 @@
 package hiro116s.simulator;
 
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -35,6 +36,12 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -53,23 +60,41 @@ public class MarathonCodeSimulator {
         this.simulationResultsWriter = simulationResultsWriter;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
         final Arguments arguments = parseArgs(args);
         try {
-            Files.createDirectories(arguments.stdoutDir.toPath());
+            Files.createDirectories(arguments.getStdoutDir().toPath());
             Files.createDirectories(arguments.logOutputDir.toPath());
         } catch (IOException e) {
             System.err.println("Failed to create required directories");
             e.printStackTrace();
             System.exit(1);
         }
+        final List<Long> seeds = LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList());
         new MarathonCodeSimulator(
                 ConcurrentCommandLineSimulator.create(
                         arguments.numThreads,
-                        LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList()),
-                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.stdoutDir, new OutputLineProcessor(arguments.debugMode), arguments.directory, arguments.getSimulationId(), Duration.ofMillis(arguments.timeoutMs))),
+                        seeds,
+                        seed -> new CommandLineSimulator(seed, arguments.commandTemplate, arguments.getStdoutDir(), new OutputLineProcessor(arguments.debugMode), arguments.directory, arguments.getSimulationId(), Duration.ofMillis(arguments.timeoutMs))),
                 createSimulationResultsWriter(arguments)
         ).run();
+
+        if (arguments.shouldUploadToS3) {
+            final List<Future<Void>> futures = new ArrayList<>();
+            final ExecutorService executorService = Executors.newFixedThreadPool(arguments.numThreads);
+            for (long seed : seeds) {
+                futures.add(executorService.submit(() -> {
+                    final AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.AP_NORTHEAST_1).build();
+                    final String path = String.format("%s/stdout/%s/%d.txt", arguments.contestName, arguments.getGitCommitHash(), seed);
+                    s3.putObject(arguments.s3BucketName, path, new File(arguments.getStdoutDir().getPath() + "/" + seed + ".txt"));
+                    return null;
+                }));
+            }
+            for (final Future<Void> future : futures) {
+                future.get();
+            }
+            executorService.shutdown();
+        }
     }
 
     private static SimulationResultsWriter createSimulationResultsWriter(final Arguments arguments) {
@@ -212,6 +237,10 @@ public class MarathonCodeSimulator {
                     getGitCommitHash(),
                     additionalNote
             );
+        }
+
+        public File getStdoutDir() {
+            return new File(stdoutDir.getPath() + "/" + getGitCommitHash());
         }
     }
 
