@@ -40,7 +40,7 @@ public class FileDatasetFetcher implements DatasetFetcher {
         return Dataset.create(builder.build());
     }
 
-    private List<Result> readResults(final File file) throws IOException {
+    List<Result> readResults(final File file) throws IOException {
         final List<Result> result = new ArrayList<>();
         try (final FileInputStream fs = new FileInputStream(file);
              final BufferedReader br = new BufferedReader(new InputStreamReader(fs))) {

@@ -64,6 +64,9 @@ public class MarathonCodeEvaluator {
         @Option(name = "--s3bucket", usage = "s3 bucket name")
         private String s3BucketName = null;
 
+        @Option(name = "--s3CacheEnabled")
+        private boolean s3CacheEnabled = false;
+
         @Option(name = "--groupByKeys", usage = "parameter keys for grouping by as comma-separated values")
         private String groupByKeys = "";
 
@@ -101,7 +104,7 @@ public class MarathonCodeEvaluator {
 
     private enum DataSource {
         LOCAL(arguments -> new FileDatasetFetcher(arguments.logInputDir)),
-        S3(arguments -> new S3DatasetFetcher(arguments.s3BucketName, arguments.contestName)),
+        S3(arguments -> new S3DatasetFetcher(arguments.s3BucketName, arguments.contestName, arguments.s3CacheEnabled)),
         DYNAMO_DB_PROD(arguments -> new DynamoDbDatasetFetcher(arguments.dynamoDBClient(), arguments.dynamoDbTableName, arguments.contestName)),
         DYNAMO_DB_LOCAL(arguments -> new DynamoDbDatasetFetcher(arguments.dynamoDBClient(), arguments.dynamoDbTableName, arguments.contestName));
 
