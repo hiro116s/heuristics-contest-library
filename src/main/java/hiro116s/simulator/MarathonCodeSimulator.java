@@ -79,7 +79,7 @@ public class MarathonCodeSimulator {
                 createSimulationResultsWriter(arguments)
         ).run();
 
-        if (arguments.shouldUploadToS3) {
+        if (arguments.shouldUploadStdoutToS3) {
             final List<Future<Void>> futures = new ArrayList<>();
             final ExecutorService executorService = Executors.newFixedThreadPool(arguments.numThreads);
             for (long seed : seeds) {
@@ -180,6 +180,9 @@ public class MarathonCodeSimulator {
 
         @Option(name = "--s3", usage = "s3 option")
         private boolean shouldUploadToS3 = false;
+
+        @Option(name = "--s3Stdout", usage = "s3 stdout option")
+        private boolean shouldUploadStdoutToS3 = false;
 
         @Option(name = "--s3bucket", usage = "s3 bucket name")
         private String s3BucketName = "hiro116s.s3bucket.jp";
