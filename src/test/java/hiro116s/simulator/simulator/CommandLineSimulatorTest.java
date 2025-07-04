@@ -37,6 +37,7 @@ class CommandLineSimulatorTest {
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);
         assertEquals(1, actual.getResults().get(0).seed);
+        assertEquals("Score = 1\n", actual.getResults().get(0).errString);
     }
 
     @Test
@@ -56,6 +57,7 @@ class CommandLineSimulatorTest {
                 "N", 2L,
                 "hoge", "fuga"
         ), actual.getResults().get(0).parsedData.params);
+        assertEquals("Score = 1\nParam:M = 1\nParam:N = 2\nParam:hoge = fuga\n", actual.getResults().get(0).errString);
         assertEquals(1, actual.getResults().get(0).seed);
     }
 
@@ -73,6 +75,7 @@ class CommandLineSimulatorTest {
         assertEquals(1, actual.getResults().get(0).parsedData.score);
         assertTrue(actual.getResults().get(0).parsedData.params.isEmpty());
         assertEquals(1, actual.getResults().get(0).seed);
+        assertEquals("Score = 1\n", actual.getResults().get(0).errString);
 
         // stdout contents verification
         assertEquals("abc\n", Files.readString(Path.of(tempDir.toString(), "1.txt")));
@@ -92,6 +95,7 @@ class CommandLineSimulatorTest {
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);
         assertEquals(1, actual.getResults().get(0).seed);
+        assertEquals("Score = 1\n", actual.getResults().get(0).errString);
     }
 
     @Test
@@ -107,6 +111,7 @@ class CommandLineSimulatorTest {
         assertEquals(1, actual.getResults().size());
         assertEquals(ParsedData.TIMEOUT_DATA, actual.getResults().get(0).parsedData);
         assertEquals(1, actual.getResults().get(0).seed);
+        assertEquals("", actual.getResults().get(0).errString);
     }
 
     @Test
@@ -122,5 +127,6 @@ class CommandLineSimulatorTest {
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);
         assertEquals(1, actual.getResults().get(0).seed);
+        assertEquals("Score = 1\n", actual.getResults().get(0).errString);
     }
 }

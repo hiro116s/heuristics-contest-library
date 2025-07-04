@@ -66,15 +66,15 @@ public class CommandLineSimulator implements Simulator {
         final Process exec;
         try {
             exec = processBuilder.start();
-            final ParsedData parsedData = readParsedDataOrTimeout(exec);
+            final ProcessResult processResult = buildProcessResultOrTimeout(exec);
             System.out.println(String.format("End seed %d, elapsed time: %d ms", seed, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
-            return new SimulationResults(Lists.newArrayList(new Result(seed, simulationId, parsedData)));
+            return new SimulationResults(Lists.newArrayList(new Result(seed, simulationId, processResult.parsedData, processResult.errorOutput)));
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private ParsedData readParsedDataOrTimeout(Process exec) throws IOException {
+    private ProcessResult buildProcessResultOrTimeout(Process exec) throws IOException {
         final long startTime = System.currentTimeMillis();
         try (final InputStream errorStream = exec.getErrorStream();
              final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(errorStream))) {
@@ -83,15 +83,16 @@ public class CommandLineSimulator implements Simulator {
             while (true) {
                 while (errorStream.available() <= 0) {
                     if (!exec.isAlive()) {
+                        final String err = sb.toString();
                         // TODO: This is not optimized for long string.
-                        for (String s : sb.toString().split("\n")) {
+                        for (String s : err.split("\n")) {
                             outputLineProcessor.processLine(s);
                         }
-                        return outputLineProcessor.getResult();
+                        return new ProcessResult(outputLineProcessor.getResult(), err);
                     }
                     final long elapsedTimeMs = System.currentTimeMillis() - startTime;
                     if (elapsedTimeMs > timeout.toMillis()) {
-                        return ParsedData.TIMEOUT_DATA;
+                        return new ProcessResult(ParsedData.TIMEOUT_DATA, sb.toString());
                     }
                     try {
                         Thread.sleep(0L, 100000 /* 100 us */);
@@ -104,4 +105,6 @@ public class CommandLineSimulator implements Simulator {
             }
         }
     }
+
+    record ProcessResult(ParsedData parsedData, String errorOutput) {}
 }

@@ -28,7 +28,9 @@ import org.kohsuke.args4j.spi.Setter;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -52,10 +54,12 @@ public class MarathonCodeSimulator {
     private static final String CURRENT_TIME_RAW = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
     static final String DYNAMO_DB_TABLE_NAME = "contest_scores";
 
+    private final Arguments arguments;
     private final Simulator simulator;
     private final SimulationResultsWriter simulationResultsWriter;
 
-    public MarathonCodeSimulator(Simulator simulator, SimulationResultsWriter simulationResultsWriter) {
+    public MarathonCodeSimulator(Arguments arguments, Simulator simulator, SimulationResultsWriter simulationResultsWriter) {
+        this.arguments = arguments;
         this.simulator = simulator;
         this.simulationResultsWriter = simulationResultsWriter;
     }
@@ -64,14 +68,16 @@ public class MarathonCodeSimulator {
         final Arguments arguments = parseArgs(args);
         try {
             Files.createDirectories(arguments.getStdoutDir().toPath());
+            Files.createDirectories(arguments.getStderrDir().toPath());
             Files.createDirectories(arguments.logOutputDir.toPath());
         } catch (IOException e) {
             System.err.println("Failed to create required directories");
             e.printStackTrace();
             System.exit(1);
         }
-        final List<Long> seeds = LongStream.rangeClosed(arguments.minSeed, arguments.maxSeed).boxed().collect(Collectors.toList());
+        final List<Long> seeds = arguments.getSeeds();
         new MarathonCodeSimulator(
+                arguments,
                 ConcurrentCommandLineSimulator.create(
                         arguments.numThreads,
                         seeds,
@@ -122,6 +128,15 @@ public class MarathonCodeSimulator {
     private void run() throws IOException {
         final SimulationResults results = simulator.simulate();
         simulationResultsWriter.write(results);
+
+        // Write standard error to files
+        final List<Long> seeds = arguments.getSeeds();
+        for (int i = 0; i < seeds.size(); i++) {
+            final long seed = seeds.get(i);
+            try (final BufferedWriter bw = new BufferedWriter(new FileWriter(arguments.getStderrDir() + "/" + seed + ".res"))) {
+                bw.write(results.getResults().get(i).errString);
+            }
+        }
     }
 
     private static Arguments parseArgs(final String[] args) {
@@ -153,6 +168,9 @@ public class MarathonCodeSimulator {
 
         @Option(name = "--stdoutDir", usage = "standard output directory", handler = FileOptionHandler.class)
         private File stdoutDir = new File("./stdout");
+
+        @Option(name = "--stderrDir", usage = "standard error directory", handler = FileOptionHandler.class)
+        private File stderrDir = new File("./error");
 
         @Option(name = "--additionalNote", usage = "additional note for file name")
         private String additionalNote = "";
@@ -243,7 +261,15 @@ public class MarathonCodeSimulator {
         }
 
         public File getStdoutDir() {
-            return new File(stdoutDir.getPath() + "/" + getGitCommitHash());
+            return new File(stdoutDir.getPath());
+        }
+
+        public File getStderrDir() {
+            return new File(stderrDir.getPath());
+        }
+
+        public List<Long> getSeeds() {
+            return LongStream.rangeClosed(minSeed, maxSeed).boxed().collect(Collectors.toList());
         }
     }
 
