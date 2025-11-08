@@ -83,6 +83,14 @@ public class CommandLineSimulator implements Simulator {
             while (true) {
                 while (errorStream.available() <= 0) {
                     if (!exec.isAlive()) {
+                        while (true) {
+                            int n = bufferedReader.read(buffer);
+                            if (n == -1) {
+                                break;
+                            }
+                            sb.append(String.valueOf(buffer, 0, n));
+                        }
+
                         final String err = sb.toString();
                         // TODO: This is not optimized for long string.
                         for (String s : err.split("\n")) {
