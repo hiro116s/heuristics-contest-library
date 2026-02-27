@@ -39,6 +39,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -163,6 +164,9 @@ public class MarathonCodeSimulator {
         @Option(name = "--maxSeed", usage = "max seed")
         private int maxSeed = 100;
 
+        @Option(name = "--seeds", usage = "comma separated seeds")
+        private String seeds = null;
+
         @Option(name = "--logOutputDir", usage = "log output directory", handler = FileOptionHandler.class)
         private File logOutputDir = new File("./log");
 
@@ -269,7 +273,13 @@ public class MarathonCodeSimulator {
         }
 
         public List<Long> getSeeds() {
-            return LongStream.rangeClosed(minSeed, maxSeed).boxed().collect(Collectors.toList());
+            if (seeds != null) {
+                return LongStream.of(
+                        Arrays.stream(seeds.split(",")).mapToLong(Long::parseLong).toArray()
+                ).boxed().collect(Collectors.toList());
+            } else {
+                return LongStream.rangeClosed(minSeed, maxSeed).boxed().collect(Collectors.toList());
+            }
         }
     }
 

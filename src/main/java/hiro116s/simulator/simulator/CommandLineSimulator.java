@@ -67,7 +67,9 @@ public class CommandLineSimulator implements Simulator {
         try {
             exec = processBuilder.start();
             final ProcessResult processResult = buildProcessResultOrTimeout(exec);
+            long elapsed_time_ms = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             System.out.println(String.format("End seed %d, elapsed time: %d ms", seed, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+            processResult.parsedData.params.put("elapsed_time_ms", elapsed_time_ms);
             return new SimulationResults(Lists.newArrayList(new Result(seed, simulationId, processResult.parsedData, processResult.errorOutput)));
         } catch (final IOException e) {
             throw new RuntimeException(e);

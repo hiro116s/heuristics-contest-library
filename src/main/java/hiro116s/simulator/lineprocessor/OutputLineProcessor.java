@@ -31,7 +31,6 @@ public class OutputLineProcessor implements LineProcessor<ParsedData> {
             score = Double.parseDouble(ws[1]);
         } else if (line.startsWith("Param:")) {
             final String[] ws = line.replace("Param:", "").split(" = ");
-            Preconditions.checkArgument(!params.containsKey(ws[0]));
             String key = ws[0].trim();
             String value = ws[1].trim();
             if (value.chars().allMatch(Character::isDigit)) {
