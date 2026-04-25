@@ -58,23 +58,23 @@ java -cp build/libs/heuristics-contest-library-1.0-SNAPSHOT.jar hiro116s.simulat
 
 #### 引数
 
-| 引数 | 説明 | デフォルト値 |
-| --- | --- | --- |
-| `--commandTemplate` | **必須**。実行するコマンド。`$SEED` プレースホルダーを含める必要があります。 | |
-| `--minSeed` | 開始シード。 | 1 |
-| `--maxSeed` | 終了シード。 | 100 |
-| `--seeds` | 実行する特定のシードのカンマ区切りリスト（min/max よりも優先されます）。 | |
-| `--numThreads` | 並列実行のスレッド数。 | 1 |
-| `--timeout` | 各実行のタイムアウト時間（ミリ秒）。 | Long.MAX_VALUE |
-| `--contestName` | コンテスト名。S3/DynamoDB オプションを使用する場合に必須です。 | |
-| `--s3` | S3 へのログアップロードを有効にします。 | false |
-| `--s3Stdout` | S3 への標準出力のアップロードを有効にします。 | false |
-| `--s3Bucket` | S3 バケット名。 | |
-| `--dynamo` | DynamoDB 更新タイプ: `NONE`, `LOCAL`, `PRODUCTION`。 | NONE |
-| `--stdoutDir` | 標準出力を保存するディレクトリ。 | `./stdout` |
-| `--stderrDir` | 標準エラー出力を保存するディレクトリ。 | `./error` |
-| `--logOutputDir` | ログを保存するディレクトリ。 | `./log` |
-| `--debugMode` | デバッグモードを有効にします（すべての標準エラーを出力します）。 | false |
+| 引数                | 説明                                                                         | デフォルト値   |
+| ------------------- | ---------------------------------------------------------------------------- | -------------- |
+| `--commandTemplate` | **必須**。実行するコマンド。`$SEED` プレースホルダーを含める必要があります。 |                |
+| `--minSeed`         | 開始シード。                                                                 | 1              |
+| `--maxSeed`         | 終了シード。                                                                 | 100            |
+| `--seeds`           | 実行する特定のシードのカンマ区切りリスト（min/max よりも優先されます）。     |                |
+| `--numThreads`      | 並列実行のスレッド数。                                                       | 1              |
+| `--timeout`         | 各実行のタイムアウト時間（ミリ秒）。                                         | Long.MAX_VALUE |
+| `--contestName`     | コンテスト名。S3/DynamoDB オプションを使用する場合に必須です。               |                |
+| `--s3`              | S3 へのログアップロードを有効にします。                                      | false          |
+| `--s3Stdout`        | S3 への標準出力のアップロードを有効にします。                                | false          |
+| `--s3Bucket`        | S3 バケット名。                                                              |                |
+| `--dynamo`          | DynamoDB 更新タイプ: `NONE`, `LOCAL`, `PRODUCTION`。                         | NONE           |
+| `--stdoutDir`       | 標準出力を保存するディレクトリ。                                             | `./stdout`     |
+| `--stderrDir`       | 標準エラー出力を保存するディレクトリ。                                       | `./error`      |
+| `--logOutputDir`    | ログを保存するディレクトリ。                                                 | `./log`        |
+| `--debugMode`       | デバッグモードを有効にします（すべての標準エラーを出力します）。             | false          |
 
 ### MarathonCodeEvaluator
 
@@ -100,12 +100,12 @@ java -cp build/libs/heuristics-contest-library-1.0-SNAPSHOT.jar hiro116s.simulat
 
 #### 引数
 
-| 引数 | 説明 | デフォルト値 |
-| --- | --- | --- |
-| `--source` | データソース: `LOCAL`, `S3`, `DYNAMO_DB_PROD`, `DYNAMO_DB_LOCAL`。 | LOCAL |
-| `--logInputDir` | ログディレクトリへのパス（source が LOCAL の場合に使用）。 | `./src/main/java/log` |
-| `--groupByKeys` | 結果をグループ化するためのカンマ区切りのキー。 | |
-| `--contestName` | コンテスト名（source が S3/DynamoDB の場合に必須）。 | |
-| `--s3Bucket` | S3 バケット名。 | |
-| `--s3CacheEnabled` | S3 のキャッシュを有効にします。 | false |
-| `--dynamoDbTableName` | DynamoDB テーブル名。 | contest_scores |
+| 引数                  | 説明                                                               | デフォルト値          |
+| --------------------- | ------------------------------------------------------------------ | --------------------- |
+| `--source`            | データソース: `LOCAL`, `S3`, `DYNAMO_DB_PROD`, `DYNAMO_DB_LOCAL`。 | LOCAL                 |
+| `--logInputDir`       | ログディレクトリへのパス（source が LOCAL の場合に使用）。         | `./src/main/java/log` |
+| `--groupByKeys`       | 結果をグループ化するためのカンマ区切りのキー。                     |                       |
+| `--contestName`       | コンテスト名（source が S3/DynamoDB の場合に必須）。               |                       |
+| `--s3Bucket`          | S3 バケット名。                                                    |                       |
+| `--s3CacheEnabled`    | S3 のキャッシュを有効にします。                                    | false                 |
+| `--dynamoDbTableName` | DynamoDB テーブル名。                                              | contest_scores        |
