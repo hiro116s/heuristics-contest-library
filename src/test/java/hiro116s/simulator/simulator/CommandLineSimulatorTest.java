@@ -76,7 +76,7 @@ class CommandLineSimulatorTest {
         assertEquals("Score = 1\n", actual.getResults().get(0).errString);
 
         // stdout contents verification
-        assertEquals("abc\n", Files.readString(Path.of(tempDir.toString(), "1.txt")));
+        assertEquals("abc\n", Files.readString(Path.of(tempDir.toString(), "1.out")));
     }
 
     @Test

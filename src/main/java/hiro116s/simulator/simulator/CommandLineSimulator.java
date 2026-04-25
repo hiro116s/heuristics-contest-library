@@ -58,7 +58,7 @@ public class CommandLineSimulator implements Simulator {
         System.out.println("Start seed " + seed);
         final Stopwatch stopwatch = Stopwatch.createStarted();
         final ProcessBuilder processBuilder = new ProcessBuilder(commandTemplate.build(seed))
-                .redirectOutput(Paths.get(outputDirectory.getPath(), String.format("%d.txt", seed)).toFile());
+                .redirectOutput(Paths.get(outputDirectory.getPath(), String.format("%d.out", seed)).toFile());
         commandTemplate.inRedirectFilePathOrEmpty(seed).ifPresent(
                 redirectFilePath -> processBuilder.redirectInput(ProcessBuilder.Redirect.from(new File(redirectFilePath)))
         );

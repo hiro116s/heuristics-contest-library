@@ -92,8 +92,8 @@ public class MarathonCodeSimulator {
             for (long seed : seeds) {
                 futures.add(executorService.submit(() -> {
                     final AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.AP_NORTHEAST_1).build();
-                    final String path = String.format("%s/stdout/%s/%d.txt", arguments.contestName, arguments.getGitCommitHash(), seed);
-                    s3.putObject(arguments.s3BucketName, path, new File(arguments.getStdoutDir().getPath() + "/" + seed + ".txt"));
+                    final String path = String.format("%s/stdout/%s/%d.out", arguments.contestName, arguments.getGitCommitHash(), seed);
+                    s3.putObject(arguments.s3BucketName, path, new File(arguments.getStdoutDir().getPath() + "/" + seed + ".out"));
                     return null;
                 }));
             }
@@ -106,7 +106,7 @@ public class MarathonCodeSimulator {
 
     private static SimulationResultsWriter createSimulationResultsWriter(final Arguments arguments) {
         final String gitCommitHash = arguments.getGitCommitHash();
-        final String logFileName = arguments.getSimulationId();
+        final String logFileName = String.format("%s.log", arguments.getSimulationId());
         final String logFilePath = String.format("%s/%s",
                 arguments.logOutputDir.getPath(),
                 logFileName
@@ -169,9 +169,6 @@ public class MarathonCodeSimulator {
 
         @Option(name = "--logOutputDir", usage = "log output directory", handler = FileOptionHandler.class)
         private File logOutputDir = new File("./log");
-
-        @Option(name = "--stdoutDir", usage = "standard output directory", handler = FileOptionHandler.class)
-        private File stdoutDir = new File("./stdout");
 
         @Option(name = "--stderrDir", usage = "standard error directory", handler = FileOptionHandler.class)
         private File stderrDir = new File("./error");
@@ -257,7 +254,7 @@ public class MarathonCodeSimulator {
         }
 
         public String getSimulationId() {
-            return String.format("%s-%s%s.log",
+            return String.format("%s-%s%s",
                     CURRENT_TIME_RAW,
                     getGitCommitHash(),
                     additionalNote
@@ -265,7 +262,7 @@ public class MarathonCodeSimulator {
         }
 
         public File getStdoutDir() {
-            return new File(stdoutDir.getPath());
+            return new File(logOutputDir + "/" + getSimulationId());
         }
 
         public File getStderrDir() {
