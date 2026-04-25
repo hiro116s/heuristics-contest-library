@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -102,7 +103,8 @@ public class CommandLineSimulator implements Simulator {
                     }
                     final long elapsedTimeMs = System.currentTimeMillis() - startTime;
                     if (elapsedTimeMs > timeout.toMillis()) {
-                        return new ProcessResult(ParsedData.TIMEOUT_DATA, sb.toString());
+                        final var paramsCopied = new HashMap<>(outputLineProcessor.getResult().params);
+                        return new ProcessResult(ParsedData.createTimedOutParsedData(paramsCopied), sb.toString());
                     }
                     try {
                         Thread.sleep(0L, 100000 /* 100 us */);

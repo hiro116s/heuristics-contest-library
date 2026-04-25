@@ -52,11 +52,9 @@ class CommandLineSimulatorTest {
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);
-        assertEquals(ImmutableMap.of(
-                "M", 1L,
-                "N", 2L,
-                "hoge", "fuga"
-        ), actual.getResults().get(0).parsedData.params);
+        assertEquals(1L, actual.getResults().get(0).parsedData.params.get("M"));
+        assertEquals(2L, actual.getResults().get(0).parsedData.params.get("N"));
+        assertEquals("fuga", actual.getResults().get(0).parsedData.params.get("hoge"));
         assertEquals("Score = 1\nParam:M = 1\nParam:N = 2\nParam:hoge = fuga\n", actual.getResults().get(0).errString);
         assertEquals(1, actual.getResults().get(0).seed);
     }
@@ -73,7 +71,7 @@ class CommandLineSimulatorTest {
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
         assertEquals(1, actual.getResults().get(0).parsedData.score);
-        assertTrue(actual.getResults().get(0).parsedData.params.isEmpty());
+        assertTrue(actual.getResults().get(0).parsedData.params.containsKey("elapsed_time_ms"));
         assertEquals(1, actual.getResults().get(0).seed);
         assertEquals("Score = 1\n", actual.getResults().get(0).errString);
 
@@ -109,7 +107,9 @@ class CommandLineSimulatorTest {
         final CommandLineSimulator simulator = new CommandLineSimulator(1L, commandTemplate, tempDir.toFile(), new OutputLineProcessor(false), null, "a", Duration.ofMillis(990L));
         final SimulationResults actual = simulator.simulate();
         assertEquals(1, actual.getResults().size());
-        assertEquals(ParsedData.TIMEOUT_DATA, actual.getResults().get(0).parsedData);
+        assertEquals(ParsedData.Status.TIMEOUT, actual.getResults().get(0).parsedData.status);
+        assertEquals(-1, actual.getResults().get(0).parsedData.score);
+        assertTrue(actual.getResults().get(0).parsedData.params.containsKey("elapsed_time_ms"));
         assertEquals(1, actual.getResults().get(0).seed);
         assertEquals("", actual.getResults().get(0).errString);
     }

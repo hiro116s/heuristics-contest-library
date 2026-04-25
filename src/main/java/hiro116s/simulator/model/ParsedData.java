@@ -3,12 +3,11 @@ package hiro116s.simulator.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class ParsedData {
-    public static final ParsedData TIMEOUT_DATA = new ParsedData(-1, Status.TIMEOUT, ImmutableMap.of());
-
     public static final double NO_FIELD = -1.0;
 
     public double score;
@@ -31,6 +30,10 @@ public class ParsedData {
                 ", status=" + status +
                 ", params=" + params +
                 '}';
+    }
+
+    public static ParsedData createTimedOutParsedData(Map<String, Object> params) {
+        return new ParsedData(-1, Status.TIMEOUT, params);
     }
 
     public enum Status {

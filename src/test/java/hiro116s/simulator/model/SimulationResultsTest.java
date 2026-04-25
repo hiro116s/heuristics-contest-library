@@ -24,7 +24,7 @@ class SimulationResultsTest {
                         "N", 2,
                         "M", 2
                 ))),
-                new Result(4L, "d", ParsedData.TIMEOUT_DATA)
+                new Result(4L, "d", new ParsedData(-1.0, Status.TIMEOUT, ImmutableMap.of()))
         ));
         assertEquals(
                 "{\"seed\":1,\"simulationId\":\"a\",\"parsedData\":{\"score\":1.0,\"status\":\"OK\",\"params\":{\"N\":1,\"M\":1,\"X\":10}}}\n" +
